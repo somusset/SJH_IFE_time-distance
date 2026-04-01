@@ -7,3 +7,7 @@ So far the application will run locally only. In a conda environment in which th
 ```bash
 streamlit run app4_time-distance.py
 ```
+
+### Access to media
+To run properly one will need to add a correct path in the configuration file of the project, line 7.    
+This is meant to be replaced by a url once the data is uploaded on a webserver.
