@@ -4,11 +4,11 @@ import pandas as pd  # type: ignore
 from streamlit_drawable_canvas import st_canvas  # type: ignore
 from PIL import Image  # type: ignore
 import datetime
-import sunpy.visualization.colormaps as cm  # type: ignore
+# import sunpy.visualization.colormaps as cm  # type: ignore
 import matplotlib.pyplot as plt  # type: ignore
 from urllib.request import urlopen, Request
 import json
-import re
+# import re
 import yaml  # type: ignore
 from pathlib import Path
 
@@ -22,7 +22,8 @@ with open('Config\\config_project.yaml', 'r') as file:
 with open('Config\\config_documentation.yaml', 'r') as file:
     documentation = yaml.safe_load(file)
 
-cmap_aia = plt.get_cmap("sdoaia304")  # type: ignore
+# cmap_aia = plt.get_cmap("sdoaia304")  # type: ignore
+cmap_aia = plt.get_cmap("Greys")  # type: ignore
 cmap_grey = plt.get_cmap("Greys")  # type: ignore
 st.set_page_config(layout="wide")
 

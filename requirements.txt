@@ -1,0 +1,9 @@
+numpy=1.26.2
+pandas=2.1.3
+matplotlib
+pyyaml
+streamlit=1.32.0
+streamlit-drawable-canvas=0.9.3
+panoptes-aggregation=4.1.0
+panoptes-client=1.6.2
+panoptescli=1.1.5
