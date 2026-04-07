@@ -117,33 +117,24 @@ PANOPTES_HEADERS = {
     'Content-Type': 'application/json',
 }
 
-@st.cache_data
-def get_all_subjects(config):
-    all_subjects = []
-    page = 1
-    template = config["project_urls"]["zooniverse_subjects"]
-    subject_set_id = config["zooniverse_config"]["subject_set_id"]
-    while True:
-        url = template.format(subject_set_id=subject_set_id, page=page)
-        response = http_requests.get(url, headers=PANOPTES_HEADERS)
-        response.raise_for_status()
-        data = response.json()
-        subjects = data.get("subjects", [])
-        if not subjects:
-            break
-        all_subjects.extend(subjects)
-        page += 1
-    return all_subjects
-
-@st.cache_data
-def get_subject_metadata(subject_id):
-    url = f"https://www.zooniverse.org/api/subjects/{subject_id}"
-    response = http_requests.get(url, headers=PANOPTES_HEADERS)
+def get_next_subject(workflow_id, token=None):
+    """Fetch the next queued subject from Panoptes.
+    With auth: returns a subject the user hasn't classified yet.
+    Without auth: returns a random subject from the workflow.
+    """
+    headers = dict(PANOPTES_HEADERS)
+    if token:
+        headers["Authorization"] = f"Bearer {token}"
+    response = http_requests.get(
+        f"{PANOPTES_URL}/api/subjects/queued",
+        headers=headers,
+        params={"workflow_id": workflow_id, "page_size": 1},
+    )
     response.raise_for_status()
-    data = response.json()
-    subject = data["subjects"][0]
-    metadata = subject["metadata"]
-    return metadata
+    subjects = response.json().get("subjects", [])
+    if not subjects:
+        return None
+    return subjects[0]
 
 def get_time_array_from_metadata(metadata):
     raw = metadata['time_data']
@@ -165,14 +156,17 @@ def get_td_data_from_metadata(metadata):
 
 # --------- FUNCTION TO MOVE TO THE NEXT JET ---------------
 
-def next_jet(subject_index, subject_ids):
-    if subject_index < len(subject_ids) - 1:
-        st.session_state["subject_index"] += 1
-        st.session_state["started_at"] = datetime.datetime.now(datetime.timezone.utc).isoformat()
-    else:
-        st.success("All jets completed!")
+def next_jet():
+    """Fetch the next queued subject and store it in session state."""
+    subject = get_next_subject(
+        config["zooniverse_config"]["workflow_id"],
+        token=st.session_state.get("oauth_token"),
+    )
+    if subject is None:
+        st.success("No more subjects available!")
         st.stop()
-
+    st.session_state["current_subject"] = subject
+    st.session_state["started_at"] = datetime.datetime.now(datetime.timezone.utc).isoformat()
     st.rerun()
 
 
@@ -255,14 +249,6 @@ def create_classification(lines, subject_id, started_at, token=None):
 
 
 # =========================================================
-# -------------------- GET SUBJECTS -----------------------
-# =========================================================
-
-subjects = get_all_subjects(config)
-subject_id_list = [s['id'] for s in subjects]
-
-
-# =========================================================
 # -------------------- SESSION STATE ----------------------
 # =========================================================
 
@@ -270,14 +256,21 @@ if "username" not in st.session_state:
     st.session_state["username"] = "guest"
 if "oauth_token" not in st.session_state:
     st.session_state["oauth_token"] = None
-if "subject_ids" not in st.session_state:
-    st.session_state["subject_ids"] = subject_id_list
-if "subject_index" not in st.session_state:
-    st.session_state["subject_index"] = 0
 if "started_at" not in st.session_state:
     st.session_state["started_at"] = datetime.datetime.now(datetime.timezone.utc).isoformat()
 if "selected_submit_option" not in st.session_state:
     st.session_state["selected_submit_option"] = None
+
+# Fetch the first queued subject if we don't have one yet
+if "current_subject" not in st.session_state:
+    subject = get_next_subject(
+        config["zooniverse_config"]["workflow_id"],
+        token=st.session_state.get("oauth_token"),
+    )
+    if subject is None:
+        st.error("No subjects available for this workflow.")
+        st.stop()
+    st.session_state["current_subject"] = subject
 
 # =========================================================
 # -------------------- LOGIN (OAuth) ----------------------
@@ -293,6 +286,8 @@ if "code" in query_params and st.session_state["oauth_token"] is None:
         user = get_authenticated_user(token_data["access_token"])
         if user:
             st.session_state["username"] = user.get("login", user.get("display_name", "user"))
+        # Re-fetch subject with auth so Panoptes returns unclassified subjects
+        st.session_state.pop("current_subject", None)
         # Clear the code from the URL to prevent re-exchange on rerun
         st.query_params.clear()
         st.rerun()
@@ -316,13 +311,9 @@ else:
 # ------------- LOAD DATA FOR CURRENT SUBJECT -------------
 # =========================================================
 
-# get current subject
-subject_ids = st.session_state["subject_ids"]
-subject_index = st.session_state["subject_index"]
-current_subject_id = subject_ids[subject_index]
-
-# get metadata
-metadata = get_subject_metadata(current_subject_id)
+current_subject = st.session_state["current_subject"]
+current_subject_id = current_subject["id"]
+metadata = current_subject["metadata"]
 time, distance, time_dist, run_diff_td = get_td_data_from_metadata(metadata)
 
 # read jet id to access local context media (not part of the subject)
@@ -455,7 +446,7 @@ with right:
 # =========================================================
 
 with main:
-    canvas_key = f"canvas_{st.session_state['subject_index']}"
+    canvas_key = f"canvas_{current_subject_id}"
     canvas = st_canvas(
         background_image=image,
         update_streamlit=True,
@@ -536,7 +527,7 @@ with st.sidebar:
             except Exception as e:
                 st.error(f"Failed to submit classification: {e}")
 
-            next_jet(subject_index, subject_ids)
+            next_jet()
         else:
             st.warning("No line drawn. Please select one of the reasons below.")
 
@@ -572,4 +563,4 @@ with st.sidebar:
     submit_and_talk = st.button("Submit & Talk", disabled=disable_submit)
     if submit:
         # need to add a way to save this no classification
-        next_jet(subject_index, subject_ids)
+        next_jet()
