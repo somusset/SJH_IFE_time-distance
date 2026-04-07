@@ -374,8 +374,9 @@ with main:
                 st.session_state.show_info = False
 
 with right:
+    st.link_button("Go to Zooniverse Talk", "https://www.zooniverse.org/projects/sophiemu/solar-jet-hunter/talk", use_container_width=True)
     with st.container(border=True):
-        st.link_button("Go to Zooniverse Talk", "https://www.zooniverse.org/projects/sophiemu/solar-jet-hunter/talk")
+        
 
         st.write('#### More info about this jet')
         # st.video(str(context_path))
