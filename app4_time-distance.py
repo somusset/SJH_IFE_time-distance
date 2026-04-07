@@ -375,8 +375,8 @@ with main:
 
 with right:
     with st.container(border=True):
-        if st.button("Go to talk board", use_container_width=True):
-            pass
+        st.link_button("Go to Zooniverse Talk", "https://www.zooniverse.org/projects/sophiemu/solar-jet-hunter/talk")
+
         st.write('#### More info about this jet')
         # st.video(str(context_path))
         st.write('Play the video to see the jet developing in the associated box.')
