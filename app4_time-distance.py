@@ -560,7 +560,7 @@ with st.sidebar:
     if lines_drawn:
         st.warning("Submit disabled: you have drawn lines. Clear them to classify.")
     # ---- Submit button ----
-    submit = st.button("Submit", disabled=disable_submit)
+    submit = st.button("Submit", disabled=disable_submit, width='stretch')
     submit_and_talk = st.button("Submit & Talk", disabled=disable_submit)
     if submit:
         # need to add a way to save this no classification
