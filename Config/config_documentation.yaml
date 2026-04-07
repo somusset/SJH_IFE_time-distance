@@ -4,10 +4,12 @@ documentation_media:
         example_01:
             filename: "Example_01.PNG"
             name: 'img_example_01'
+            width: 'content'
             caption: "Example of line drawing"
         example_02:
             filename: "Example_02.png"
             name: 'img_example_02'
+            width: 'content'
             caption: "cLeft: good annotation of the leading flows of the ejection. Right: too many annotations of the flows."
         img_td_01:
             filename: "time-distance-explained-01.png"
@@ -32,6 +34,7 @@ documentation_media:
         img_td_05:
             filename: "time-distance-explained-05.png"
             name: 'img_td_05'
+            width: 'content'
             caption: "Finalized time-distance plot."
 sidebar_text: 
     control_text: |
