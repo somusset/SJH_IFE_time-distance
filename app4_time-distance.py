@@ -41,7 +41,7 @@ with Path('Config/config_project.yaml').open('r') as file:
 with Path('Config/config_documentation.yaml').open('r') as file:
     documentation = yaml.safe_load(file)
 
-cmap_aia = plt.get_cmap("Greys")  # type: ignore
+cmap_aia = plt.get_cmap("afmhot")  # type: ignore
 cmap_grey = plt.get_cmap("Greys")  # type: ignore
 st.set_page_config(layout="wide")
 
