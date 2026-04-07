@@ -550,7 +550,7 @@ with st.sidebar:
     # 1. Single-choice selection (radio ensures only one)
     selected = st.radio("Select one option:", options, index=None, key="selected_option")  # ← no default selection
     # Store selection
-    st.session_state["selected_option"] = selected
+    # st.session_state["selected_option"] = selected
     # ---- Conditions ----
     no_option_selected = selected is None
     lines_drawn = lines is not None and len(lines) > 0
