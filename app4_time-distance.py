@@ -168,6 +168,7 @@ def get_td_data_from_metadata(metadata):
 def next_jet(subject_index, subject_ids):
     if subject_index < len(subject_ids) - 1:
         st.session_state["subject_index"] += 1
+        st.session_state["started_at"] = datetime.datetime.now(datetime.timezone.utc).isoformat()
     else:
         st.success("All jets completed!")
         st.stop()
@@ -211,6 +212,47 @@ def get_authenticated_user(token):
     users = response.json().get("users", [])
     return users[0] if users else None
 
+def create_classification(lines, subject_id, started_at, token=None):
+    headers = {
+        "Accept": "application/vnd.api+json; version=1",
+        "Content-Type": "application/json",
+    }
+    if token:
+        headers["Authorization"] = f"Bearer {token}"
+
+    finished_at = datetime.datetime.now(datetime.timezone.utc).isoformat()
+
+    classification = {
+        "classifications": {
+            "annotations": [
+                {"task": "T0", "value": lines}
+            ],
+            "metadata": {
+                "workflow_version": "1.0",
+                "started_at": started_at,
+                "finished_at": finished_at,
+                "source": "IFE_time-distance",
+                "utc_offset": "0",
+                "user_agent": "SJH_IFE_time-distance/1.0 (Streamlit)",
+                "user_language": "en",
+            },
+            "links": {
+                "project": str(config["zooniverse_config"]["project_id"]),
+                "workflow": str(config["zooniverse_config"]["workflow_id"]),
+                "subjects": [str(subject_id)],
+            },
+            "completed": True,
+        }
+    }
+
+    response = http_requests.post(
+        f"{PANOPTES_URL}/api/classifications",
+        json=classification,
+        headers=headers,
+    )
+    response.raise_for_status()
+    return classification, response.json()
+
 
 # =========================================================
 # -------------------- GET SUBJECTS -----------------------
@@ -232,6 +274,8 @@ if "subject_ids" not in st.session_state:
     st.session_state["subject_ids"] = subject_id_list
 if "subject_index" not in st.session_state:
     st.session_state["subject_index"] = 0
+if "started_at" not in st.session_state:
+    st.session_state["started_at"] = datetime.datetime.now(datetime.timezone.utc).isoformat()
 
 
 # =========================================================
@@ -431,12 +475,11 @@ with main:
 # -------------------- COORDINATE MAPPING ------------------
 # =========================================================
 
-def pixel_to_data(px, py, x_seconds, y, width, height):
-    # Map pixel → time (seconds)
+def pixel_to_physical(px, py, x_seconds, y, width, height):
+    # Map pixel → time (seconds since start, then to UTC datetime)
     t_sec = x_seconds[0] + (px / width) * (x_seconds[-1] - x_seconds[0])
-    # Convert back to datetime
     t = time[0] + datetime.timedelta(seconds=t_sec)
-    # Map pixel → distance (invert y-axis)
+    # Map pixel → distance (invert y-axis: pixel 0 = top = max distance)
     y_val = y[0] + ((height - py) / height) * (y[-1] - y[0])
     return t, y_val
 
@@ -447,32 +490,23 @@ def pixel_to_data(px, py, x_seconds, y, width, height):
 
 lines = []
 
-# NEED TO ALSO SAVE THE NUMERIC VALUE OF X FOR AGGREGATION PURPOSE...
-# WE ALSO NEED TO STORE THE IMAGE WIDTH AND HEIGHT, AND MAYBE THE LIMITS OF X_SECONDS,
-# TO EASY CONVERSION OF THE AGGREGATED VALUE LATER
 if canvas.json_data is not None:
     objects = canvas.json_data["objects"]
 
     for obj in objects:
         if obj["type"] == "line":
-
-            t0, y0 = pixel_to_data(
-                obj["x1"], obj["y1"],
-                x_seconds, y,
-                image.width, image.height
-            )
-
-            t1, y1 = pixel_to_data(
-                obj["x2"], obj["y2"],
-                x_seconds, y,
-                image.width, image.height
-            )
+            t0, d0 = pixel_to_physical(obj["x1"], obj["y1"], x_seconds, y, image.width, image.height)
+            t1, d1 = pixel_to_physical(obj["x2"], obj["y2"], x_seconds, y, image.width, image.height)
 
             lines.append({
-                "t0": str(t0),
-                "y0": float(y0),
-                "t1": str(t1),
-                "y1": float(y1),
+                "x_start": float(obj["x1"]),
+                "y_start": float(obj["y1"]),
+                "x_end": float(obj["x2"]),
+                "y_end": float(obj["y2"]),
+                "time_start": t0.strftime("%Y-%m-%dT%H:%M:%S.%fZ"),
+                "dist_start": float(d0),
+                "time_end": t1.strftime("%Y-%m-%dT%H:%M:%S.%fZ"),
+                "dist_end": float(d1),
             })
 
 # =========================================================
@@ -484,12 +518,19 @@ with st.sidebar:
 
     if st.button("Save lines, get new subject", use_container_width=True):
         if lines:
-            # 1. Save your CSV
-            df = pd.DataFrame(lines)
-            df["username"] = st.session_state.get("username", "guest")
-            df["subject_id"] = current_subject_id
-            df.to_csv(f"output_{current_subject_id}.csv", index=False)
-            st.success("Saved to lines.csv")
+            try:
+                payload, response = create_classification(
+                    lines,
+                    current_subject_id,
+                    st.session_state["started_at"],
+                    token=st.session_state.get("oauth_token"),
+                )
+                st.success("Classification submitted!")
+                st.json(payload)
+                # Reset started_at for next subject
+                st.session_state["started_at"] = datetime.datetime.now(datetime.timezone.utc).isoformat()
+            except Exception as e:
+                st.error(f"Failed to submit classification: {e}")
 
             next_jet(subject_index, subject_ids)
         else:
