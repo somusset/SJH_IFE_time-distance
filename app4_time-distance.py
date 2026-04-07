@@ -5,7 +5,7 @@ from PIL import Image  # type: ignore
 import datetime
 import matplotlib.pyplot as plt  # type: ignore
 import urllib.parse
-import requests as http_requests
+import requests as http_requests  # type: ignore
 import json
 import yaml  # type: ignore
 from pathlib import Path
@@ -13,9 +13,9 @@ from pathlib import Path
 # The package calls st.elements.image.image_to_url(image, width, ...) which moved
 # to st.elements.lib.image_utils and changed its signature (width → LayoutConfig).
 import os as _os
-import streamlit.elements.image as _st_image
-from streamlit.elements.lib.image_utils import image_to_url as _new_image_to_url
-from streamlit.elements.lib.layout_utils import LayoutConfig as _LayoutConfig
+import streamlit.elements.image as _st_image  # type: ignore
+from streamlit.elements.lib.image_utils import image_to_url as _new_image_to_url  # type: ignore
+from streamlit.elements.lib.layout_utils import LayoutConfig as _LayoutConfig  # type: ignore
 
 # Patch streamlit-drawable-canvas for Streamlit 1.56+ and Cloud compatibility.
 # 1) image_to_url moved to st.elements.lib.image_utils with a new signature
@@ -392,7 +392,7 @@ image = get_norm_canvas_image_linear(z_display, vmin, vmax, cmap=cmap)
 # The container is hidden via CSS to avoid displaying a duplicate image.
 _img_anchor = st.container()
 with _img_anchor:
-    st.image(image, width=1, use_container_width=False)
+    st.image(image, width=1)
 st.markdown("<style>[data-testid='stImage']:has(img[width='1']) { display: none; }</style>", unsafe_allow_html=True)
 
 # display title, help, context data
@@ -421,7 +421,7 @@ with main:
                 st.session_state.show_info = False
 
 with right:
-    st.link_button("Go to Zooniverse Talk", "https://www.zooniverse.org/projects/sophiemu/solar-jet-hunter/talk", use_container_width=True)
+    st.link_button("Go to Zooniverse Talk", "https://www.zooniverse.org/projects/sophiemu/solar-jet-hunter/talk", width='stretch')
     with st.container(border=True):
         
 
@@ -512,7 +512,7 @@ if canvas.json_data is not None:
 with st.sidebar:
     st.title("When done drawing lines:")
 
-    if st.button("Save lines, get new subject", use_container_width=True):
+    if st.button("Submit lines", width='stretch'):
         if lines:
             try:
                 payload, response = create_classification(
@@ -561,7 +561,7 @@ with st.sidebar:
         st.warning("Submit disabled: you have drawn lines. Clear them to classify.")
     # ---- Submit button ----
     submit = st.button("Submit", disabled=disable_submit, width='stretch')
-    submit_and_talk = st.button("Submit & Talk", disabled=disable_submit)
+    submit_and_talk = st.button("Submit & Talk", disabled=disable_submit, width='stretch')
     if submit:
         # need to add a way to save this no classification
         next_jet()
