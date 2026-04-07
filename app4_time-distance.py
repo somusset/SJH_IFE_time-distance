@@ -166,6 +166,7 @@ def next_jet():
         st.success("No more subjects available!")
         st.stop()
     st.session_state["current_subject"] = subject
+    st.session_state["selected_submit_option"] = None
     st.session_state["started_at"] = datetime.datetime.now(datetime.timezone.utc).isoformat()
     st.rerun()
 
