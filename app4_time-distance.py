@@ -4,27 +4,30 @@ import pandas as pd  # type: ignore
 from PIL import Image  # type: ignore
 import datetime
 import matplotlib.pyplot as plt  # type: ignore
-from urllib.request import urlopen, Request
 import urllib.parse
 import requests as http_requests
 import json
-import re
 import yaml  # type: ignore
 from pathlib import Path
-# Patch streamlit-drawable-canvas for Streamlit 1.56+ compatibility
-# The package calls st.elements.image.image_to_url(image, width, clamp, channels, format, id)
-# but this function moved to st.elements.lib.image_utils AND its signature changed:
-# the second arg is now a LayoutConfig object instead of an int width.
+# Patch streamlit-drawable-canvas for Streamlit 1.56+ compatibility.
+# The package calls st.elements.image.image_to_url(image, width, ...) which moved
+# to st.elements.lib.image_utils and changed its signature (width → LayoutConfig).
+import os as _os
 import streamlit.elements.image as _st_image
-if not hasattr(_st_image, 'image_to_url'):
-    from streamlit.elements.lib.image_utils import image_to_url as _new_image_to_url
-    from streamlit.elements.lib.layout_utils import LayoutConfig as _LayoutConfig
+from streamlit.elements.lib.image_utils import image_to_url as _new_image_to_url
+from streamlit.elements.lib.layout_utils import LayoutConfig as _LayoutConfig
 
-    def _compat_image_to_url(image, width, clamp, channels, output_format, image_id):
-        layout_config = _LayoutConfig(width=width)
-        return _new_image_to_url(image, layout_config, clamp, channels, output_format, image_id)
+# Patch streamlit-drawable-canvas for Streamlit 1.56+ and Cloud compatibility.
+# 1) image_to_url moved to st.elements.lib.image_utils with a new signature
+# 2) On Cloud, the canvas component prefixes only the origin to media URLs,
+#    missing the /~/+/ path prefix that Cloud requires.
+def _compat_image_to_url(image, width, clamp, channels, output_format, image_id):
+    url = _new_image_to_url(image, _LayoutConfig(width=width), clamp, channels, output_format, image_id)
+    if _os.environ.get("STREAMLIT_SHARING_MODE") or _os.path.exists("/mount/src"):
+        url = "/~/+/" + url.lstrip("/")
+    return url
 
-    _st_image.image_to_url = _compat_image_to_url
+_st_image.image_to_url = _compat_image_to_url
 
 from streamlit_drawable_canvas import st_canvas  # type: ignore
 
@@ -109,6 +112,11 @@ def draw_time_arrow(width="700px", label="Time"):
 
 # --------- FUNCTIONS TO GET DATA ----------------------
 
+PANOPTES_HEADERS = {
+    'Accept': 'application/vnd.api+json; version=1',
+    'Content-Type': 'application/json',
+}
+
 @st.cache_data
 def get_all_subjects(config):
     all_subjects = []
@@ -117,10 +125,9 @@ def get_all_subjects(config):
     subject_set_id = config["zooniverse_config"]["subject_set_id"]
     while True:
         url = template.format(subject_set_id=subject_set_id, page=page)
-        headers = {'Accept': 'application/vnd.api+json; version=1'}
-        request = Request(url, headers=headers)
-        response = urlopen(request).read()
-        data = json.loads(response)
+        response = http_requests.get(url, headers=PANOPTES_HEADERS)
+        response.raise_for_status()
+        data = response.json()
         subjects = data.get("subjects", [])
         if not subjects:
             break
@@ -131,14 +138,9 @@ def get_all_subjects(config):
 @st.cache_data
 def get_subject_metadata(subject_id):
     url = f"https://www.zooniverse.org/api/subjects/{subject_id}"
-    headers = {
-        'Accept': 'application/vnd.api+json; version=1',
-        'Content-Type': 'application/json'
-    }
-    request = Request(url, headers=headers)
-    response = urlopen(request).read()
-    data = json.loads(response)
-    # Extract metadata
+    response = http_requests.get(url, headers=PANOPTES_HEADERS)
+    response.raise_for_status()
+    data = response.json()
     subject = data["subjects"][0]
     metadata = subject["metadata"]
     return metadata
@@ -347,6 +349,14 @@ with st.sidebar:
 
 # Get image
 image = get_norm_canvas_image_linear(z_display, vmin, vmax, cmap=cmap)
+
+# Keep a framework reference to the image so Streamlit's media file manager
+# doesn't garbage-collect it before the canvas component fetches it.
+# The container is hidden via CSS to avoid displaying a duplicate image.
+_img_anchor = st.container()
+with _img_anchor:
+    st.image(image, width=1, use_container_width=False)
+st.markdown("<style>[data-testid='stImage']:has(img[width='1']) { display: none; }</style>", unsafe_allow_html=True)
 
 # display title, help, context data
 st.title("Time–Distance Line Drawing Tool")
