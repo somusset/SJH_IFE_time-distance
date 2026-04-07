@@ -446,23 +446,27 @@ if canvas.json_data is not None:
     for obj in objects:
         if obj["type"] == "line":
 
-            t0, y0 = pixel_to_data(
+            t1, d1 = pixel_to_data(
                 obj["x1"], obj["y1"],
                 x_seconds, y,
                 image.width, image.height
             )
 
-            t1, y1 = pixel_to_data(
+            t2, d2 = pixel_to_data(
                 obj["x2"], obj["y2"],
                 x_seconds, y,
                 image.width, image.height
             )
 
             lines.append({
-                "t0": str(t0),
-                "y0": float(y0),
+                "x1": float(obj["x1"]),
+                "y1": float(obj["y1"]),
                 "t1": str(t1),
-                "y1": float(y1),
+                "d1": float(d1),
+                "x2": float(obj["x2"]),
+                "y2": float(obj["y2"]),
+                "t2": str(t2),
+                "d2": float(d2),
             })
 
 # =========================================================
