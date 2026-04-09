@@ -428,7 +428,7 @@ st.markdown("<style>[data-testid='stImage']:has(img[width='1']) { display: none;
 
 with main:
     st.write(documentation["main_text"]["main_text_01"])
-    with st.expander("❔ Need help with this task?"):
+    with st.expander("❔ Need some help with this task?"):
         st.write(documentation['main_text']['about_this_task']['intro_text'])
         inside_left, inside_right = st.columns([3, 6])
 
@@ -600,7 +600,7 @@ with st.sidebar:
 
     st.write("### If you do not see any ejection:")
     st.write("Play the video of the jet on the right to assess the situation, then pick one of the options below.")
-    with st.expander("❔ Need help with this task?"):
+    with st.expander("❔ Need some help with this task?"):
         st.write(documentation["sidebar_text"]["no_ejection_info_text"]["text1"])
         st.info(documentation["sidebar_text"]["no_ejection_info_text"]["info1"])
         st.write(documentation["sidebar_text"]["no_ejection_info_text"]["text2"])
