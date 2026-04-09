@@ -61,7 +61,10 @@ sidebar_text:
 main_text:
     about_this_task:
         intro_text: |
-            Lines can be drawn directly on the data below: click right and maintain to draw. Release to end the line. Several lines can be drawn.
+            Lines can be drawn directly on the data below: click right and maintain to draw. Release to end the line. 
+            Several lines can be drawn, when you are done, submit your classification in the left side bar.    
+
+            If you do not see ejection and will not drawn any line, follow the guidance in the left side bar to assess why no ejection is visible and to submit your classification.
         example_text1: |
             We want you to draw line on the edge of the flows. 
             Different lines may be necessary to capture different features, and the curvature of the flow. It might also be easier to see the flows in running-difference (see left panel to switch).   

@@ -46,7 +46,6 @@ with Path('db/aia304_cmap.json').open('r') as file:
     colors = np.array(json.load(file))
     cmap_aia = ListedColormap(colors)
 
-#cmap_aia = plt.get_cmap("afmhot")  # type: ignore
 cmap_grey = plt.get_cmap("Greys")  # type: ignore
 st.set_page_config(layout="wide")
 
@@ -64,7 +63,7 @@ def get_norm_canvas_image_linear(z, vmin, vmax, cmap=cmap_aia):
     # color map
     rgba = cmap(z_norm)   # shape: (ny, nx, 4)
     # Convert to image
-    rgb = (rgba[:, :, :3] * 255).astype(np.uint8)  # drop alpha
+    rgb = (rgba[:, :, :3] * 255).astype(np.uint8)  # drop alpha # type: ignore
     # Create image
     image = Image.fromarray(rgb)
     return image
@@ -85,6 +84,7 @@ def display_documentation_image(documentation, key):
         )
     except KeyError:
         st.error(f"Missing config for image key: {key}")
+
 
 def draw_time_arrow(width="700px", label="Time"):
     html = f"""
@@ -141,15 +141,18 @@ def get_next_subject(workflow_id, token=None):
         return None
     return subjects[0]
 
+
 def get_time_array_from_metadata(metadata):
     raw = metadata['time_data']
     times = np.array([datetime.datetime.fromisoformat(t) for t in json.loads(raw)])
     return times
 
+
 def get_float_array_from_metadata(metadata, key='distance_data'):
     raw = metadata[key]
     array = np.array(json.loads(raw))
     return array
+
 
 def get_td_data_from_metadata(metadata):
     time = get_time_array_from_metadata(metadata)
@@ -191,6 +194,7 @@ def get_oauth_login_url():
     })
     return f"{PANOPTES_URL}/oauth/authorize?{params}"
 
+
 def exchange_code_for_token(code):
     oauth = st.secrets["zooniverse_oauth"]
     response = http_requests.post(f"{PANOPTES_URL}/oauth/token", data={
@@ -203,6 +207,7 @@ def exchange_code_for_token(code):
     response.raise_for_status()
     return response.json()
 
+
 def get_authenticated_user(token):
     response = http_requests.get(f"{PANOPTES_URL}/api/me", headers={
         "Accept": "application/vnd.api+json; version=1",
@@ -211,6 +216,7 @@ def get_authenticated_user(token):
     response.raise_for_status()
     users = response.json().get("users", [])
     return users[0] if users else None
+
 
 def create_classification(lines, comment, subject_id, started_at, token=None):
     headers = {
@@ -329,7 +335,7 @@ jet_year = current_jet_id[4:8]
 context_path = Path(config['project_urls']['context_media']) / jet_year / f"{current_jet_id}_304" / f"{current_jet_id}_304.mp4"
 
 # =========================================================
-# -------------------- UI CONTROLS ------------------------
+# ------------- UI CONTROLS: IMAGE OPTIONS ----------------
 # =========================================================
 
 with st.sidebar:
@@ -378,7 +384,7 @@ z_max = float(np.nanmax(z_display))
 
 
 # =========================================================
-# ---------------- UI CONTROLS Continued ------------------
+# ---------------- UI CONTROLS: SLIDER --------------------
 # =========================================================
 
 # Sliders
@@ -402,7 +408,7 @@ with _img_anchor:
 st.markdown("<style>[data-testid='stImage']:has(img[width='1']) { display: none; }</style>", unsafe_allow_html=True)
 
 # display title, help, context data
-st.title("Time–Distance Line Drawing Tool")
+st.title("Solar Jet Velocity Estimator")
 
 main, right = st.columns([6, 3])
 
@@ -452,6 +458,10 @@ with main:
                 st.session_state.show_info = False
                 st.rerun()
 
+# =========================================================
+# -------------------- RIGHT PANEL ------------------------
+# =========================================================
+
 with right:
     st.link_button("Go to Zooniverse Talk", "https://www.zooniverse.org/projects/sophiemu/solar-jet-hunter/talk", width='stretch')
     with st.container(border=True):
@@ -498,7 +508,7 @@ with main:
 
 
 # =========================================================
-# -------------------- COORDINATE MAPPING ------------------
+# ------------------- COORDINATE MAPPING ------------------
 # =========================================================
 
 def pixel_to_physical(px, py, x_seconds, y, width, height):
@@ -511,7 +521,7 @@ def pixel_to_physical(px, py, x_seconds, y, width, height):
 
 
 # =========================================================
-# -------------------- EXTRACT LINES -----------------------
+# ------------------- EXTRACT LINES -----------------------
 # =========================================================
 
 lines = []
@@ -542,7 +552,11 @@ if canvas.json_data is not None:
 with st.sidebar:
     st.title("When done drawing lines:")
 
-    if st.button("Submit lines", width='stretch'):
+    lines_drawn = lines is not None and len(lines) > 0
+    # ---- Disable logic ----
+    disable_submit_lines = not lines_drawn
+
+    if st.button("Submit lines", disabled = disable_submit_lines, width='stretch', help="No line drawn yet!"):
         if lines:
             try:
                 payload, response = create_classification(
@@ -563,6 +577,8 @@ with st.sidebar:
             next_jet()
         else:
             st.warning("No line drawn. Please select one of the reasons below.")
+
+    st.button("Submit lines & Talk", disabled = disable_submit_lines, width='stretch', help="No line drawn yet!")
 
     st.write("### If you do not see any ejection:")
     st.write("Play the video of the jet on the right to assess the situation, then pick one of the options below.")
@@ -586,12 +602,10 @@ with st.sidebar:
     lines_drawn = lines is not None and len(lines) > 0
     # ---- Disable logic ----
     disable_submit = no_option_selected or lines_drawn
-    # ---- Feedback (optional but very useful UX) ----
-    if lines_drawn:
-        st.warning("Submit disabled: you have drawn lines. Clear them to classify.")
     # ---- Submit button ----
-    # if st.button("Submit", disabled=disable_submit, width='stretch'):
-    if st.button("Submit", width='stretch'):
+    if st.button("Submit", disabled=disable_submit, width='stretch',
+                 help="Disabled because you either selected no option or drew lines."):
+        # this next one should not be needed because we disabled the button for line drawn, but keeping it just in case right now
         if lines:
             st.warning("Submit disabled: you have drawn lines. Clear them to classify.")
         else:
@@ -612,6 +626,5 @@ with st.sidebar:
                 st.error(f"Failed to submit classification: {e}")
             next_jet()
 
-    submit_and_talk = st.button("Submit & Talk", disabled=disable_submit, width='stretch')
-    
-    st.write('This is a text for test')
+    submit_and_talk = st.button("Submit & Talk", disabled=disable_submit, width='stretch',
+                                help="Disabled because you either selected no option or drew lines.")
