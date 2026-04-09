@@ -14,27 +14,27 @@ documentation_media:
         img_td_01:
             filename: "time-distance-explained-01.png"
             name: 'img_td_01'
-            width: 250
+            width: 500
             caption: "First frame in the video for this jet."
         img_td_02:
             filename: "time-distance-explained-02.png"
             name: 'img_td_02'
-            width: 100
+            width: 500
             caption: "First column of the time-distance plot, obtained from the first frame of the video."
         img_td_03:
             filename: "time-distance-explained-03.png"
             name: 'img_td_03'
-            width: 300
+            width: 500
             caption: "Same operation, for a later frame."
         img_td_04:
             filename: "time-distance-explained-04.png"
             name: 'img_td_04'
-            width: 150
+            width: 500
             caption: "Individual columns, representing different time frames, together to form a time distance plot."
         img_td_05:
             filename: "time-distance-explained-05.png"
             name: 'img_td_05'
-            width: 'content'
+            width: 500
             caption: "Finalized time-distance plot."
 sidebar_text: 
     control_text: |
@@ -84,6 +84,20 @@ main_text:
             for all of these reasons, we still need volunteers to look at these one by one, and to draw the lines on the time-distance plot: the complexity of the data makes automated analysis very difficult.
 
             Thank you for helping us out!
+    why_ife:
+        text1: |
+            This webpage is an experimental feature of the Zooniverse ecosystem. 
+            The Zooniverse team is exploring how individual projects, such as Solar Jet Hunter, could use personalized web apps to enable different ways of displaying or classifying data.
+            More information on this effort has been described in a recent Zooniverse blog post (insert link here).
+
+            On the Solar Jet Hunter side, we wanted to use two new functionalities: the possibility to adjust the levels of intensity in the time-distance plot,
+            and the possibility to present the video of the jet with its box on the side.
+
+            The slider with adjustable levels for the image is particularly useful to better visualize faint ejections in the time-distance plot.
+
+            The movie with the jet and its box has two purposes: first, it is simply nice to see the jet at the origin of the time-distance plot, 
+            and second, it is useful to understand the context around the time-distance plot. In particular, when the time-distance plot is unclear or unusual, 
+            playing the video of the jet can be insightful and inform on the potentiel problems around this jet.
 right_col_text:
     how_do_we_produce_td:
         text1: |

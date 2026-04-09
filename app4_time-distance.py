@@ -163,6 +163,13 @@ def get_td_data_from_metadata(metadata):
     return time, distance, time_dist, run_diff
 
 
+def get_video_url(subject):
+    for loc in subject["locations"]:
+        for mime, url in loc.items():
+            if mime.startswith("video"):
+                return url
+    return None
+
 # --------- FUNCTION TO MOVE TO THE NEXT JET ---------------
 
 def next_jet():
@@ -289,8 +296,9 @@ if "current_subject" not in st.session_state:
 # =========================================================
 # -------------------- LOGIN (OAuth) ----------------------
 # =========================================================
-st.title("Solar Jet Velocity Estimator")
 main, right = st.columns([6, 3])
+with main:
+    st.title("Solar Jet Velocity Estimator")
 
 # Handle OAuth callback: Panoptes redirects back with ?code=
 query_params = st.query_params
@@ -312,18 +320,21 @@ if "code" in query_params and st.session_state["oauth_token"] is None:
         st.query_params.clear()
 
 with right:
-    st.write(f"Logged in as: {st.session_state['username']}")
+    with st.container(border=True):
+        st.write(f"Logged in as: {st.session_state['username']}")
 
-if st.session_state["username"] == "guest":
-    login_url = get_oauth_login_url()
-    with right:
-        st.link_button("Log in with Zooniverse", login_url)
-else:
-    with right:
-        if st.button("Log out"):
-            st.session_state["username"] = "guest"
-            st.session_state["oauth_token"] = None
-            st.rerun()
+        if st.session_state["username"] == "guest":
+            login_url = get_oauth_login_url()
+            st.link_button("Log in with Zooniverse", login_url)
+        else:
+            if st.button("Log out"):
+                st.session_state["username"] = "guest"
+                st.session_state["oauth_token"] = None
+                st.rerun()
+        
+        st.link_button("Talk", "https://www.zooniverse.org/projects/sophiemu/solar-jet-hunter/talk", width='stretch')
+        st.link_button("Solar Jet Hunter (Zooniverse)", "https://www.zooniverse.org/projects/sophiemu/solar-jet-hunter", width='stretch')
+
 
 
 # =========================================================
@@ -465,25 +476,16 @@ with main:
 # =========================================================
 
 with right:
-    st.link_button("Go to Zooniverse Talk", "https://www.zooniverse.org/projects/sophiemu/solar-jet-hunter/talk", width='stretch')
     with st.container(border=True):
         st.write('#### More info about this jet')
-        # st.video(str(context_path))
+        video_url = get_video_url(current_subject)
+        if video_url:
+            st.video(video_url)
+        else:
+            st.warning("No video available for this subject.")
         st.write('Play the video to see the jet developing in the associated box.')
 
-    with st.expander("ℹ️ How do we produce the time-distance plot?"):
-        st.write(documentation["right_col_text"]["how_do_we_produce_td"]["text1"])
-        display_documentation_image(documentation, 'img_td_01')
-        st.write(documentation["right_col_text"]["how_do_we_produce_td"]["text2"])
-        display_documentation_image(documentation, 'img_td_02')
-        st.write(documentation["right_col_text"]["how_do_we_produce_td"]["text3"])
-        display_documentation_image(documentation, 'img_td_03')
-        st.write(documentation["right_col_text"]["how_do_we_produce_td"]["text4"])
-        display_documentation_image(documentation, 'img_td_04')
-        st.write(documentation["right_col_text"]["how_do_we_produce_td"]["text5"])
-        display_documentation_image(documentation, 'img_td_05')
-
-
+    
 # =========================================================
 # -------------------- CANVAS -----------------------------
 # =========================================================
@@ -505,9 +507,22 @@ with main:
 
     # Add some documentation below the canvas
     st.write(" ")
-    with st.expander("ℹ️ Why are we doing this?"):
+    st.write("#### Frequently Asked Questions")
+    with st.expander("ℹ️ What is a time-distance plot, and how is it produced?"):
+        st.write(documentation["right_col_text"]["how_do_we_produce_td"]["text1"])
+        display_documentation_image(documentation, 'img_td_01')
+        st.write(documentation["right_col_text"]["how_do_we_produce_td"]["text2"])
+        display_documentation_image(documentation, 'img_td_02')
+        st.write(documentation["right_col_text"]["how_do_we_produce_td"]["text3"])
+        display_documentation_image(documentation, 'img_td_03')
+        st.write(documentation["right_col_text"]["how_do_we_produce_td"]["text4"])
+        display_documentation_image(documentation, 'img_td_04')
+        st.write(documentation["right_col_text"]["how_do_we_produce_td"]["text5"])
+        display_documentation_image(documentation, 'img_td_05')
+    with st.expander("ℹ️ Why are we doing this time-distance analysis?"):
         st.write(documentation["main_text"]["why_are_we_doing_this"]["text1"])
-
+    with st.expander("ℹ️ Why are we doing this in another website, rather than in the official Solar Jet Hunter page on Zooniverse?"):
+        st.write(documentation["main_text"]["why_ife"]["text1"])
 
 # =========================================================
 # ------------------- COORDINATE MAPPING ------------------
@@ -559,7 +574,7 @@ with st.sidebar:
     # ---- Disable logic ----
     disable_submit_lines = not lines_drawn
 
-    if st.button("Submit lines", disabled = disable_submit_lines, width='stretch', help="No line drawn yet!"):
+    if st.button("Submit lines", disabled = disable_submit_lines, width='stretch', help="Disabled until lines are drawn"):
         if lines:
             try:
                 payload, response = create_classification(
@@ -581,7 +596,7 @@ with st.sidebar:
         else:
             st.warning("No line drawn. Please select one of the reasons below.")
 
-    st.button("Submit lines & Talk", disabled = disable_submit_lines, width='stretch', help="No line drawn yet!")
+    st.button("Submit lines & Talk", disabled = disable_submit_lines, width='stretch', help="Disabled until lines are drawn")
 
     st.write("### If you do not see any ejection:")
     st.write("Play the video of the jet on the right to assess the situation, then pick one of the options below.")
@@ -607,7 +622,7 @@ with st.sidebar:
     disable_submit = no_option_selected or lines_drawn
     # ---- Submit button ----
     if st.button("Submit", disabled=disable_submit, width='stretch',
-                 help="Disabled because you either selected no option or drew lines."):
+                 help="Disabled when either no option is selected, or if lines exist"):
         # this next one should not be needed because we disabled the button for line drawn, but keeping it just in case right now
         if lines:
             st.warning("Submit disabled: you have drawn lines. Clear them to classify.")
@@ -630,4 +645,4 @@ with st.sidebar:
             next_jet()
 
     submit_and_talk = st.button("Submit & Talk", disabled=disable_submit, width='stretch',
-                                help="Disabled because you either selected no option or drew lines.")
+                                help="Disabled when either no option is selected, or if lines exist")
