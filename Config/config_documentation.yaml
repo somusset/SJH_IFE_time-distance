@@ -11,6 +11,18 @@ documentation_media:
             name: 'img_example_02'
             width: 'content'
             caption: "Left: good annotation of the leading flows of the ejection. Right: too many annotations of the flows."
+        example_03:
+            filename: "additional_example_05.png"
+            name: 'img_example_03'
+            width: 'content'
+        example_04:
+            filename: "additional_example_04.png"
+            name: 'img_example_04'
+            width: 'content'
+        example_05:
+            filename: "additional_example_03.png"
+            name: 'img_example_05'
+            width: 'content'
         img_td_01:
             filename: "time-distance-explained-01.png"
             name: 'img_td_01'
@@ -65,7 +77,9 @@ main_text:
     about_this_task:
         intro_text: |
             Lines can be drawn directly on the data below: click right and maintain to draw. Release to end the line. 
-            Several lines can be drawn, when you are done, submit your classification in the left side bar.    
+            Several lines can be drawn, and lines can be deleted using the button below the image (left corner).
+            
+            When you are done, submit your classification in the left side bar.    
 
             If you do not see ejection and will not drawn any line, follow the guidance in the left side bar to assess why no ejection is visible and to submit your classification.
         example_text1: |
@@ -73,6 +87,20 @@ main_text:
             Different lines may be necessary to capture different features, and the curvature of the flow. It might also be easier to see the flows in running-difference (see left panel to switch).   
         example_text2: |
             We want to capture the leading edge of the ejection. You may need a few lines to capture its curvature. We do not want to draw each individual flow.
+        example_text3: |
+            Depending on the orientation of the box around the jet, the jet base could be at the bottom or at the top of the time-distance plot.
+            Consequently, the flows could be evolving from bottom to top or from top to bottom, as shown on these two examples.
+
+            Additionally, we sometimes see matter falling back, as in the second plot here. We do not report the flows that come back.
+        example_text4: |
+            Sometimes, the time range chose for the plot was very short. Generally, the flows are a bit streched as shown on this example.
+        example_text5: |
+            Sometimes, we do not see any flows. Adjusting the levels, switching on and off the running difference, changing to log scale... All of these tricks can help see flows.
+
+            It is also possible that even with playing with the display, no flow can be seen in the time-distance plot. We kindly asked that you run the movie on the right to assess if possible the cause of the absence of flows.
+            It could be that the jet is not moving that much, that the jet is very faint, or that there is no jet. 
+            Sometimes, the jet is not aligned with the side of the box and that will also cause difficulty to see the flows in the time-distance plot.
+            Finally, it is possible that the jet duration was not reported very accurately and that the movie is too short to capture the motion of the jet from its start.
     why_are_we_doing_this:
         text1: |
             The time-distance plots are one way to visualize the jet ejection over time. By drawing lines along the ejection, we get information to calculate the velocity of the ejection, which is an important paramter in understanding the physical process causing the jets.

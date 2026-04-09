@@ -430,7 +430,7 @@ with main:
     st.write(documentation["main_text"]["main_text_01"])
     with st.expander("❔ Need some help with this task?"):
         st.write(documentation['main_text']['about_this_task']['intro_text'])
-        inside_left, inside_right = st.columns([3, 6])
+        inside_left, inside_middle, inside_right = st.columns([3, 3, 3])
 
         if "show_info" not in st.session_state:
             st.session_state.show_info = False
@@ -454,7 +454,7 @@ with main:
         if "show_examples" not in st.session_state:
             st.session_state.show_examples = False
 
-        with inside_right:
+        with inside_middle:
             if st.button("See more examples"):
                 if st.session_state.show_examples:
                     st.session_state.show_examples = False
@@ -464,12 +464,34 @@ with main:
         if st.session_state.show_examples:
             example_image, example_text = st.columns([3, 3])
             with example_image:
-                st.info("adding example images here")
+                display_documentation_image(documentation, 'example_03')
             with example_text:
-                st.info("adding example text here")
+                st.info(documentation['main_text']['about_this_task']['example_text3'])
+            example_image, example_text = st.columns([3, 3])
+            with example_image:
+                display_documentation_image(documentation, 'example_04')
+            with example_text:
+                st.info(documentation['main_text']['about_this_task']['example_text4'])
+            example_image, example_text = st.columns([3, 3])
+            with example_image:
+                display_documentation_image(documentation, 'example_05')
+            with example_text:
+                st.info(documentation['main_text']['about_this_task']['example_text5'])
             if st.button("Close example list"):
                 st.session_state.show_examples = False
                 st.rerun()
+
+        if "no_plot" not in st.session_state:
+            st.session_state.no_plot = False
+        with inside_right:
+            if st.button("I don't see any plot!"):
+                if st.session_state.no_plot:
+                    st.session_state.no_plot = False
+                else:
+                    st.session_state.no_plot = True
+        if st.session_state.no_plot:
+            st.info("Sometimes, the display is not completely synchronised and do not show the plot. If you change one of the display parameters or draw a line, it will 'refresh' and show the plot.")
+
 
 # =========================================================
 # -------------------- RIGHT PANEL ------------------------
