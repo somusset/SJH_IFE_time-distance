@@ -10,6 +10,8 @@ The application will run locally. In a conda environment in which the Zooniverse
 streamlit run app4_time-distance.py
 ```
 
-### Access to media
-To run properly one will need to add a correct path in the configuration file of the project, line 7.    
-This is meant to be replaced by a url once the data is uploaded on a webserver.
+# Notes
+
+This application will run with subjects that have both a png and a mp4 media.    
+The manifest provides (in addition to the metadata) two rows called `png_file` and `mp4_file`. These fields are set as "locations" for each subject.
+
