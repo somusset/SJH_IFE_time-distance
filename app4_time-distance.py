@@ -610,6 +610,7 @@ with st.sidebar:
         "No jet in context movie",
         "Jet too faint",
         "Jet not aligned with the box",
+        "Movie too short",
         "Something else"
     ]
     # 1. Single-choice selection (radio ensures only one)
