@@ -10,7 +10,7 @@ documentation_media:
             filename: "Example_02.png"
             name: 'img_example_02'
             width: 'content'
-            caption: "cLeft: good annotation of the leading flows of the ejection. Right: too many annotations of the flows."
+            caption: "Left: good annotation of the leading flows of the ejection. Right: too many annotations of the flows."
         img_td_01:
             filename: "time-distance-explained-01.png"
             name: 'img_td_01'

@@ -4,6 +4,7 @@ import pandas as pd  # type: ignore
 from PIL import Image  # type: ignore
 import datetime
 import matplotlib.pyplot as plt  # type: ignore
+from matplotlib.colors import ListedColormap  # type: ignore
 import urllib.parse
 import requests as http_requests  # type: ignore
 import json
@@ -41,7 +42,11 @@ with Path('Config/config_project.yaml').open('r') as file:
 with Path('Config/config_documentation.yaml').open('r') as file:
     documentation = yaml.safe_load(file)
 
-cmap_aia = plt.get_cmap("afmhot")  # type: ignore
+with Path('db/aia304_cmap.json').open('r') as file:
+    colors = np.array(json.load(file))
+    cmap_aia = ListedColormap(colors)
+
+#cmap_aia = plt.get_cmap("afmhot")  # type: ignore
 cmap_grey = plt.get_cmap("Greys")  # type: ignore
 st.set_page_config(layout="wide")
 
@@ -207,7 +212,7 @@ def get_authenticated_user(token):
     users = response.json().get("users", [])
     return users[0] if users else None
 
-def create_classification(lines, subject_id, started_at, token=None):
+def create_classification(lines, comment, subject_id, started_at, token=None):
     headers = {
         "Accept": "application/vnd.api+json; version=1",
         "Content-Type": "application/json",
@@ -220,7 +225,8 @@ def create_classification(lines, subject_id, started_at, token=None):
     classification = {
         "classifications": {
             "annotations": [
-                {"task": "T0", "value": lines}
+                {"task": "T0", "value": lines},
+                {"task": "T1", "value": comment},
             ],
             "metadata": {
                 "workflow_version": "1.0",
@@ -405,26 +411,50 @@ with main:
 
     with st.expander("ℹ️ About this task"):
         st.write(documentation['main_text']['about_this_task']['intro_text'])
+        inside_left, inside_right = st.columns([3, 6])
 
         if "show_info" not in st.session_state:
             st.session_state.show_info = False
 
-        if st.button("See an example"):
-            st.session_state.show_info = True
+        with inside_left:
+            if st.button("See more guidelines"):
+                if st.session_state.show_info:
+                    st.session_state.show_info = False
+                else:
+                    st.session_state.show_info = True
 
         if st.session_state.show_info:
             st.info(documentation['main_text']['about_this_task']['example_text1'])
             display_documentation_image(documentation, 'example_01')
             st.info(documentation['main_text']['about_this_task']['example_text2'])
             display_documentation_image(documentation, 'example_02')
-            if st.button("Close"):
+            if st.button("Close guidelines"):
                 st.session_state.show_info = False
+                st.rerun()
+
+        if "show_examples" not in st.session_state:
+            st.session_state.show_examples = False
+
+        with inside_right:
+            if st.button("See more examples"):
+                if st.session_state.show_examples:
+                    st.session_state.show_examples = False
+                else:
+                    st.session_state.show_examples = True
+
+        if st.session_state.show_examples:
+            example_image, example_text = st.columns([3, 3])
+            with example_image:
+                st.info("adding example images here")
+            with example_text:
+                st.info("adding example text here")
+            if st.button("Close example list"):
+                st.session_state.show_info = False
+                st.rerun()
 
 with right:
     st.link_button("Go to Zooniverse Talk", "https://www.zooniverse.org/projects/sophiemu/solar-jet-hunter/talk", width='stretch')
     with st.container(border=True):
-        
-
         st.write('#### More info about this jet')
         # st.video(str(context_path))
         st.write('Play the video to see the jet developing in the associated box.')
@@ -517,11 +547,13 @@ with st.sidebar:
             try:
                 payload, response = create_classification(
                     lines,
+                    "",
                     current_subject_id,
                     st.session_state["started_at"],
                     token=st.session_state.get("oauth_token"),
                 )
                 st.success("Classification submitted!")
+                # This will display the annotation json (for validation purpose here, should be commented in the final app)
                 st.json(payload)
                 # Reset started_at for next subject
                 st.session_state["started_at"] = datetime.datetime.now(datetime.timezone.utc).isoformat()
@@ -540,7 +572,6 @@ with st.sidebar:
         st.write(documentation["sidebar_text"]["no_ejection_info_text"]["text2"])
         st.info(documentation["sidebar_text"]["no_ejection_info_text"]["info2"])
 
-
     options = [
         "No jet in context movie",
         "Jet too faint",
@@ -548,10 +579,9 @@ with st.sidebar:
         "Something else"
     ]
     # 1. Single-choice selection (radio ensures only one)
-    selected = st.radio("Select one option:", options, index=None, key="selected_submit_option")  # ← no default selection
-    # Store selection
-    # st.session_state["selected_option"] = selected
-    # ---- Conditions ----
+    key_submission_option = f"selected_submit_option_{current_subject_id}"
+    selected = st.radio("Select one option:", options, index=None, key=key_submission_option)  # ← no default selection
+    # ---- Conditions for disabling submission ----
     no_option_selected = selected is None
     lines_drawn = lines is not None and len(lines) > 0
     # ---- Disable logic ----
@@ -560,8 +590,28 @@ with st.sidebar:
     if lines_drawn:
         st.warning("Submit disabled: you have drawn lines. Clear them to classify.")
     # ---- Submit button ----
-    submit = st.button("Submit", disabled=disable_submit, width='stretch')
+    # if st.button("Submit", disabled=disable_submit, width='stretch'):
+    if st.button("Submit", width='stretch'):
+        if lines:
+            st.warning("Submit disabled: you have drawn lines. Clear them to classify.")
+        else:
+            try:
+                payload, response = create_classification(
+                    "",
+                    str(selected),
+                    current_subject_id,
+                    st.session_state["started_at"],
+                    token=st.session_state.get("oauth_token"),
+                )
+                st.success("Classification submitted!")
+                # This will display the annotation json (for validation purpose here, should be commented in the final app)
+                st.json(payload)
+                # Reset started_at for next subject
+                st.session_state["started_at"] = datetime.datetime.now(datetime.timezone.utc).isoformat()
+            except Exception as e:
+                st.error(f"Failed to submit classification: {e}")
+            next_jet()
+
     submit_and_talk = st.button("Submit & Talk", disabled=disable_submit, width='stretch')
-    if submit:
-        # need to add a way to save this no classification
-        next_jet()
+    
+    st.write('This is a text for test')
