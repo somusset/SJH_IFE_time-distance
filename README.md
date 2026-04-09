@@ -3,7 +3,9 @@ Solar Jet Hunter front end for the Zooniverse Incubator Front End workshop. This
 
 # Quick start
 
-So far the application will run locally only. In a conda environment in which the Zooniverse panoptes client is installed, and streamlit is installed, the app can be run with:
+Check out this application at https://solarjethunter-velocity.streamlit.app/ 
+
+The application will run locally. In a conda environment in which the Zooniverse panoptes client is installed, and streamlit is installed, the app can be run with:
 ```bash
 streamlit run app4_time-distance.py
 ```
