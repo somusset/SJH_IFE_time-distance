@@ -59,6 +59,9 @@ sidebar_text:
         info2: |
             Please assess the situation before choosing an option below.
 main_text:
+    main_text_01: |
+            Below is displayed a 'Time-Distance Plot' associated with a jet. 
+            We want you to draw lines along the ejection visible in the plot (if any). Ejections can be made more visible using the "Image display controls" on the left side bar.
     about_this_task:
         intro_text: |
             Lines can be drawn directly on the data below: click right and maintain to draw. Release to end the line. 

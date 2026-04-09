@@ -35,6 +35,7 @@ from streamlit_drawable_canvas import st_canvas  # type: ignore
 # =========================================================
 # -------------------- CONFIGURATION ----------------------
 # =========================================================
+st.set_page_config(page_title = "Solar Jet Velocity Estimator", page_icon="Documentation/icon.ico", layout = "wide")
 
 with Path('Config/config_project.yaml').open('r') as file:
     config = yaml.safe_load(file)
@@ -288,6 +289,8 @@ if "current_subject" not in st.session_state:
 # =========================================================
 # -------------------- LOGIN (OAuth) ----------------------
 # =========================================================
+st.title("Solar Jet Velocity Estimator")
+main, right = st.columns([6, 3])
 
 # Handle OAuth callback: Panoptes redirects back with ?code=
 query_params = st.query_params
@@ -308,16 +311,19 @@ if "code" in query_params and st.session_state["oauth_token"] is None:
         st.error(f"Login failed: {e}")
         st.query_params.clear()
 
-st.write(f"Logged in as: {st.session_state['username']}")
+with right:
+    st.write(f"Logged in as: {st.session_state['username']}")
 
 if st.session_state["username"] == "guest":
     login_url = get_oauth_login_url()
-    st.link_button("Log in with Zooniverse", login_url)
+    with right:
+        st.link_button("Log in with Zooniverse", login_url)
 else:
-    if st.button("Log out"):
-        st.session_state["username"] = "guest"
-        st.session_state["oauth_token"] = None
-        st.rerun()
+    with right:
+        if st.button("Log out"):
+            st.session_state["username"] = "guest"
+            st.session_state["oauth_token"] = None
+            st.rerun()
 
 
 # =========================================================
@@ -407,15 +413,11 @@ with _img_anchor:
     st.image(image, width=1)
 st.markdown("<style>[data-testid='stImage']:has(img[width='1']) { display: none; }</style>", unsafe_allow_html=True)
 
-# display title, help, context data
-st.title("Solar Jet Velocity Estimator")
-
-main, right = st.columns([6, 3])
+# display help, context data
 
 with main:
-    st.write("Draw lines on the image, then click 'Save lines, get new subject' (on the side panel).")
-
-    with st.expander("ℹ️ About this task"):
+    st.write(documentation["main_text"]["main_text_01"])
+    with st.expander("❔ Need help with this task?"):
         st.write(documentation['main_text']['about_this_task']['intro_text'])
         inside_left, inside_right = st.columns([3, 6])
 
@@ -455,7 +457,7 @@ with main:
             with example_text:
                 st.info("adding example text here")
             if st.button("Close example list"):
-                st.session_state.show_info = False
+                st.session_state.show_examples = False
                 st.rerun()
 
 # =========================================================
@@ -469,17 +471,17 @@ with right:
         # st.video(str(context_path))
         st.write('Play the video to see the jet developing in the associated box.')
 
-        with st.expander("ℹ️ How do we produce the time-distance plot?"):
-            st.write(documentation["right_col_text"]["how_do_we_produce_td"]["text1"])
-            display_documentation_image(documentation, 'img_td_01')
-            st.write(documentation["right_col_text"]["how_do_we_produce_td"]["text2"])
-            display_documentation_image(documentation, 'img_td_02')
-            st.write(documentation["right_col_text"]["how_do_we_produce_td"]["text3"])
-            display_documentation_image(documentation, 'img_td_03')
-            st.write(documentation["right_col_text"]["how_do_we_produce_td"]["text4"])
-            display_documentation_image(documentation, 'img_td_04')
-            st.write(documentation["right_col_text"]["how_do_we_produce_td"]["text5"])
-            display_documentation_image(documentation, 'img_td_05')
+    with st.expander("ℹ️ How do we produce the time-distance plot?"):
+        st.write(documentation["right_col_text"]["how_do_we_produce_td"]["text1"])
+        display_documentation_image(documentation, 'img_td_01')
+        st.write(documentation["right_col_text"]["how_do_we_produce_td"]["text2"])
+        display_documentation_image(documentation, 'img_td_02')
+        st.write(documentation["right_col_text"]["how_do_we_produce_td"]["text3"])
+        display_documentation_image(documentation, 'img_td_03')
+        st.write(documentation["right_col_text"]["how_do_we_produce_td"]["text4"])
+        display_documentation_image(documentation, 'img_td_04')
+        st.write(documentation["right_col_text"]["how_do_we_produce_td"]["text5"])
+        display_documentation_image(documentation, 'img_td_05')
 
 
 # =========================================================
@@ -499,7 +501,7 @@ with main:
         key=canvas_key,
     )
     # Draw arrow for time
-    draw_time_arrow()
+    # draw_time_arrow()
 
     # Add some documentation below the canvas
     st.write(" ")
@@ -550,7 +552,8 @@ if canvas.json_data is not None:
 # =========================================================
 
 with st.sidebar:
-    st.title("When done drawing lines:")
+    st.title("Submit classification")
+    st.write("### If you are done drawing lines:")
 
     lines_drawn = lines is not None and len(lines) > 0
     # ---- Disable logic ----
@@ -582,7 +585,7 @@ with st.sidebar:
 
     st.write("### If you do not see any ejection:")
     st.write("Play the video of the jet on the right to assess the situation, then pick one of the options below.")
-    with st.expander("ℹ️ More information"):
+    with st.expander("❔ Need help with this task?"):
         st.write(documentation["sidebar_text"]["no_ejection_info_text"]["text1"])
         st.info(documentation["sidebar_text"]["no_ejection_info_text"]["info1"])
         st.write(documentation["sidebar_text"]["no_ejection_info_text"]["text2"])
